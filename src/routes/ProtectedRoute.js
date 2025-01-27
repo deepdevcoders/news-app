@@ -8,7 +8,6 @@ function ProtectedRoute({ children }) {
   if (!isAuthenticated) {
     return (
       <>
-        <ToastContainer />
         <Navigate to="/login" replace />
       </>
     );

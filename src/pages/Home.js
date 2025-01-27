@@ -7,19 +7,14 @@ import { ClipLoader, PulseLoader } from "react-spinners";
 import { toast } from "react-toastify";
 
 function Home() {
-  const [category, setCategory] = useState("general");
-  const [country, setCountry] = useState("us");
-  const [language, setLanguage] = useState("en");
+  const [selectCategory, setSelectCategory] = useState("general");
+  const [selectCountry, setSelectCountry] = useState("us");
+  const [selectLanguage, setSelectLanguage] = useState("en");
   const [searchQuery, setSearchQuery] = useState("");
   const [articles, setArticles] = useState([]);
-  const [totalResults, setTotalResults] = useState(0);
   const [loading, setloading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
-
-  const filteredData = articles.filter((data) => data.url && data.urlToImage);
-
-  const APIKEY = process.env.REACT_APP_NEWS_API_KEYY;
 
   const fetchNewsArticles = async (isLoadMore = false) => {
     if (isLoadMore) {
@@ -28,21 +23,25 @@ function Home() {
       setloading(true);
     }
     try {
+      const APIKEY = process.env.REACT_APP_NEWS_API_KEY;
+      const LATEST_NEWS_BASE_URL =
+        "https://api.currentsapi.services/v1/latest-news";
+      const SEARCH_NEWS_BASE_URL = "https://api.currentsapi.services/v1/search";
+
       let url;
 
       if (searchQuery) {
-        url = `https://newsapi.org/v2/everything?q=${searchQuery}&page=${page}&pageSize=100&apiKey=${APIKEY}`;
+        url = `${SEARCH_NEWS_BASE_URL}?keywords=${searchQuery}&page_number=${page}&page_size=32&apiKey=${APIKEY}`;
       } else {
-        url = `https://newsapi.org/v2/top-headlines?country=${country}&category=${category}&language=${language}&page=${page}&pageSize=20&apiKey=${APIKEY}`;
+        url = `${LATEST_NEWS_BASE_URL}?language=${selectLanguage}&category=${selectCategory}&country=${selectCountry}&page_number=${page}&page_size=32&apiKey=${APIKEY}`;
       }
       const response = await fetch(url);
       const data = await response.json();
 
       if (data.status === "ok") {
         setArticles((prevArticles) =>
-          isLoadMore ? [...prevArticles, ...data.articles] : data.articles
+          isLoadMore ? [...prevArticles, ...data.news] : data.news
         );
-        setTotalResults(data.totalResults);
       } else {
         toast.error(data.message || "Failed to fetch articles");
       }
@@ -58,26 +57,26 @@ function Home() {
   };
 
   const handleCategoryChange = (newCategory) => {
-    setCategory(newCategory);
+    setSelectCategory(newCategory);
     setSearchQuery("");
     setPage(1); // Reset page to 1 on filter change
   };
 
   const handleCountryChange = (newCountry) => {
-    setCountry(newCountry);
+    setSelectCountry(newCountry);
     setSearchQuery("");
     setPage(1); // Reset page to 1 on filter change
   };
 
   const handleLanguageChange = (newLanguage) => {
-    setLanguage(newLanguage);
+    setSelectLanguage(newLanguage);
     setSearchQuery("");
     setPage(1); // Reset page to 1 on filter change
   };
 
   const handleSearch = (newQuery) => {
     setSearchQuery(newQuery);
-    setCategory("");
+    setSelectCategory("");
     setPage(1);
   };
 
@@ -87,18 +86,18 @@ function Home() {
 
   useEffect(() => {
     fetchNewsArticles(page > 1);
-  }, [category, page, country, language, searchQuery]);
+  }, [selectCategory, page, selectCountry, selectLanguage, searchQuery]);
 
   return (
     <>
       <Header searchQuery={searchQuery} setSearchQuery={handleSearch} />
       <FilterTabs
-        category={category}
-        setCategory={handleCategoryChange}
-        country={country}
-        setCountry={handleCountryChange}
-        language={language}
-        setLanguage={handleLanguageChange}
+        selectCategory={selectCategory}
+        setSelectCategory={handleCategoryChange}
+        selectCountry={selectCountry}
+        setSelectCountry={handleCountryChange}
+        selectLanguage={selectLanguage}
+        setSelectLanguage={handleLanguageChange}
       />
       <div className="bg-gray-100 w-full">
         {loading ? (
@@ -107,9 +106,9 @@ function Home() {
           </div>
         ) : (
           <>
-            <Card cardsData={filteredData} />
+            <Card cardsData={articles} hightLightedText={searchQuery} />
             <div className="text-center py-6">
-              {articles.length < totalResults ? (
+              {articles?.length < 200 ? (
                 <button
                   onClick={handleLoadMore}
                   disabled={loadingMore}

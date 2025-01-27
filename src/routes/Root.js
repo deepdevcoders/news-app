@@ -9,7 +9,6 @@ function Root() {
   return (
     <div>
       <BrowserRouter basename="/news-app">
-        <ToastContainer />
         <Routes>
           <Route
             path="/"
